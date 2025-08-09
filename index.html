@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Мини-квест с сердечками 1.3</title>
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin-top: 40px;
+    background: #fff0f6;
+    overflow-x: hidden;
+  }
+  h1 {
+    color: #d6336c;
+    margin-bottom: 5px;
+  }
+  #version {
+    font-size: 1rem;
+    color: #a8325a;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  #puzzle, #stageContent {
+    width: 300px;
+    height: 300px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 4px;
+    border: 3px solid #d6336c;
+    border-radius: 12px;
+    background: #ffe6f0;
+  }
+  #stageContent {
+    display: none;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+    border: none;
+    background: transparent;
+    padding: 15px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+  }
+  .piece {
+    background-color: #ff8fa3;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 36px;
+    user-select: none;
+    color: white;
+    transition: transform 0.2s ease;
+    position: relative;
+  }
+  .piece:hover {
+    transform: scale(1.1);
+  }
+  .piece.correct {
+    background-color: #d6336c;
+    cursor: default;
+  }
+  .number {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+  }
+  #message {
+    margin-top: 15px;
+    font-size: 1.2em;
+    color: #d6336c;
+    font-weight: 700;
+    min-height: 30px;
+    text-align: center;
+  }
+  #nextBtn {
+    margin-top: 15px;
+    padding: 8px 20px;
+    font-size: 1rem;
+    background-color: #d6336c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  #nextBtn.enabled {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #answerInput {
+    width: 100%;
+    padding: 8px;
+    font-size: 1rem;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 2px solid #d6336c;
+    box-sizing: border-box;
+  }
+  #checkBtn {
+    margin-top: 10px;
+    padding: 8px 20px;
+    font-size: 1rem;
+    background-color: #d6336c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #checkBtn:hover {
+    background-color: #a8325a;
+  }
+
+  /* Анимация мерцающего текста */
+  @keyframes glowing {
+    0% { text-shadow: 0 0 5px #ff5f7e, 0 0 10px #ff5f7e, 0 0 20px #ff5f7e; }
+    50% { text-shadow: 0 0 15px #ff1e47, 0 0 30px #ff1e47, 0 0 40px #ff1e47; }
+    100% { text-shadow: 0 0 5px #ff5f7e, 0 0 10px #ff5f7e, 0 0 20px #ff5f7e; }
+  }
+
+  .glow-text {
+    font-size: 2em;
+    font-weight: 900;
+    color: #d6336c;
+    animation: glowing 2s infinite;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* Конфетти */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: #ff1493;
+    opacity: 0.8;
+    top: 0;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  @keyframes fall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Мини-пазл с сердечками</h1>
+<div id="version">Версия 1.3</div>
+
+<div id="puzzle"></div>
+<div id="stageContent"></div>
+
+<div id="message"></div>
+<button id="nextBtn" disabled>Далее</button>
+
+<script>
+  const size = 3; // 3x3 пазл
+  const puzzle = document.getElementById('puzzle');
+  const stageContent = document.getElementById('stageContent');
+  const message = document.getElementById('message');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let pieces = [...Array(size * size).keys()];
+  let currentStage = 1;
+
+  function shuffle(array) {
+    for(let i = array.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  function drawPuzzle() {
+    puzzle.innerHTML = '';
+    for(let i = 0; i < pieces.length; i++) {
+      const piece = document.createElement('div');
+      piece.classList.add('piece');
+      piece.style.backgroundColor = getColor(pieces[i]);
+      piece.dataset.index = pieces[i];
+      piece.dataset.position = i;
+
+      const number = document.createElement('div');
+      number.classList.add('number');
+      number.textContent = pieces[i] + 1;
+      piece.appendChild(number);
+
+      const heart = document.createElement('span');
+      heart.textContent = '❤️';
+      piece.appendChild(heart);
+
+      puzzle.appendChild(piece);
+    }
+  }
+
+  function getColor(index) {
+    const colors = ['#ff6b81', '#ff4757', '#ff7f50', '#fa8072', '#f08080', '#ff6347', '#ff4500', '#ff1493', '#db7093'];
+    return colors[index % colors.length];
+  }
+
+  function checkWin() {
+    for(let i = 0; i < pieces.length; i++) {
+      if(pieces[i] !== i) return false;
+    }
+    return true;
+  }
+
+  let firstClick = null;
+
+  puzzle.addEventListener('click', e => {
+    if(!e.target.classList.contains('piece') && !e.target.parentElement.classList.contains('piece')) return;
+
+    const piece = e.target.classList.contains('piece') ? e.target : e.target.parentElement;
+
+    if(firstClick === null) {
+      firstClick = piece;
+      firstClick.style.transform = 'scale(1.2)';
+      firstClick.style.border = '2px solid white';
+    } else {
+      const secondClick = piece;
+      if(firstClick === secondClick) {
+        firstClick.style.transform = '';
+        firstClick.style.border = '';
+        firstClick = null;
+        return;
+      }
+      const pos1 = parseInt(firstClick.dataset.position);
+      const pos2 = parseInt(secondClick.dataset.position);
+
+      [pieces[pos1], pieces[pos2]] = [pieces[pos2], pieces[pos1]];
+
+      firstClick.style.transform = '';
+      firstClick.style.border = '';
+      firstClick = null;
+
+      drawPuzzle();
+
+      if(checkWin()) {
+        message.textContent = 'Ты собрала все сердечки! ❤️ Поздравляю! Теперь можно перейти дальше.';
+        document.querySelectorAll('.piece').forEach(p => p.classList.add('correct'));
+        nextBtn.disabled = false;
+        nextBtn.classList.add('enabled');
+      } else {
+        message.textContent = '';
+        nextBtn.disabled = true;
+        nextBtn.classList.remove('enabled');
+      }
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if(currentStage === 1) {
+      startStage2();
+    } else if(currentStage === 2) {
+      startStage3();
+    } else if(currentStage === 3) {
+      // Уже финал, кнопка не активна
+    }
+  });
+
+  function startStage2() {
+    currentStage = 2;
+    message.textContent = '';
+    puzzle.style.display = 'none';
+    stageContent.style.display = 'block';
+    stageContent.style.gridTemplateColumns = '1fr';
+    stageContent.style.gridTemplateRows = 'auto';
+    stageContent.style.height = 'auto';
+    stageContent.style.border = 'none';
+    stageContent.style.background = 'transparent';
+
+    stageContent.innerHTML = `
+      <h2>Загадка</h2>
+      <p>Что всегда с тобой, но ты не можешь его увидеть?</p>
+      <input type="text" id="answerInput" placeholder="Напиши ответ..." />
+      <button id="checkBtn">Проверить</button>
+      <div id="hint" style="margin-top:10px; color:#d6336c; font-weight:600;"></div>
+    `;
+
+    const answerInput = document.getElementById('answerInput');
+    const checkBtn = document.getElementById('checkBtn');
+    const hint = document.getElementById('hint');
+
+    checkBtn.addEventListener('click', () => {
+      const answer = answerInput.value.trim().toLowerCase();
+      if(answer === 'тень') {
+        hint.textContent = 'Правильно! Можно перейти дальше.';
+        nextBtn.disabled = false;
+        nextBtn.classList.add('enabled');
+      } else {
+        hint.textContent = 'Неправильно, попробуй ещё.';
+        nextBtn.disabled = true;
+        nextBtn.classList.remove('enabled');
+      }
+    });
+
+    nextBtn.disabled = true;
+    nextBtn.classList.remove('enabled');
+  }
+
+  function startStage3() {
+    currentStage = 3;
+    message.textContent = '';
+    puzzle.style.display = 'none';
+    stageContent.style.display = 'block';
+    stageContent.style.gridTemplateColumns = '1fr';
+    stageContent.style.gridTemplateRows = 'auto';
+    stageContent.style.height = '300px';
+    stageContent.style.border = '3px solid #d6336c';
+    stageContent.style.background = '#ffe6f0';
+    nextBtn.disabled = true;
+    nextBtn.classList.remove('enabled');
+    nextBtn.style.display = 'none';
+
+    stageContent.innerHTML = `
+      <div class="glow-text">Поздравляю! 🎉</div>
+      <p style="text-align:center; font-size:1.2em; font-weight:700; color:#d6336c;">Ты прошла все этапы квеста! Спасибо, что была со мной! ❤️</p>
+    `;
+
+    // Запускаем конфетти
+    createConfetti(50);
+  }
+
+  // Создание конфетти
+  function createConfetti(amount) {
+    for(let i = 0; i < amount; i++) {
+      const confetti = document.createElement('div');
+      confetti.classList.add('confetti');
+      confetti.style.left = Math.random() * window.innerWidth + 'px';
+      confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+      confetti.style.animationDelay = (Math.random() * 5) + 's';
+      confetti.style.backgroundColor = randomColor();
+      document.body.appendChild(confetti);
+
+      // Удаляем конфетти через 5 секунд чтобы не засорять DOM
+      setTimeout(() => {
+        confetti.remove();
+      }, 5000);
+    }
+  }
+
+  function randomColor() {
+    const colors = ['#ff1493', '#ff69b4', '#ff6b81', '#ff4757', '#db7093'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  shuffle(pieces);
+  drawPuzzle();
+</script>
+
+</body>
+</html>
