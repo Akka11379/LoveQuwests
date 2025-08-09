@@ -2,26 +2,49 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Музыка для твоего текста</title>
+<title>Музыка и текст с подсветкой</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     background: #fff0f6;
     color: #d6336c;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  #textContainer {
+    background: #ffe6f0;
+    border: 2px solid #d6336c;
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 18px;
+    line-height: 1.6;
+    min-height: 200px;
+  }
+  .line {
+    padding: 5px 0;
+    color: #a8325a;
+    transition: color 0.3s, font-weight 0.3s;
+  }
+  .active {
+    color: #d6336c;
+    font-weight: 700;
   }
   button {
-    padding: 15px 30px;
-    font-size: 18px;
+    display: block;
+    margin: 30px auto;
     background-color: #d6336c;
-    color: white;
     border: none;
     border-radius: 12px;
+    color: white;
+    font-size: 20px;
+    padding: 15px 40px;
     cursor: pointer;
-    margin-top: 30px;
+    transition: background-color 0.3s ease;
   }
   button:hover {
     background-color: #a8325a;
@@ -30,80 +53,185 @@
 </head>
 <body>
 
-<h1>Музыка для твоего текста</h1>
-<p>Нажми кнопку, чтобы начать музыку и почувствовать настроение песни.</p>
-<button id="playBtn">Играть музыку</button>
+<h1>Текст песни с подсветкой</h1>
+<div id="textContainer"></div>
+<button id="playPauseBtn">Старт</button>
 
 <script>
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const ctx = new AudioContext();
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const ctx = new AudioContext();
 
-  let isPlaying = false;
-  let startTime = 0;
-  let timer;
+const notes = {
+  'A3': 220,
+  'C4': 261.63,
+  'E4': 329.63,
+  'F4': 349.23,
+  'G4': 392.00,
+  'B4': 493.88,
+  'D5': 587.33
+};
 
-  const notes = {
-    'A3': 220,
-    'C4': 261.63,
-    'E4': 329.63,
-    'F4': 349.23,
-    'G4': 392.00
-  };
-
-  // Аккорды для куплета: Am, F, C, G
-  const chordProgression = [
+const progressions = {
+  verse: [
     ['A3', 'C4', 'E4'],  // Am
     ['F4', 'A3', 'C4'],  // F
     ['C4', 'E4', 'G4'],  // C
-    ['G4', 'B4', 'D5']   // G - не определены ноты B4 и D5, добавим их ниже
-  ];
+    ['G4', 'B4', 'D5']   // G
+  ],
+  chorus: [
+    ['F4', 'A3', 'C4'],  // F
+    ['G4', 'B4', 'D5'],  // G
+    ['A3', 'C4', 'E4'],  // Am
+    ['A3', 'C4', 'E4']   // Am
+  ]
+};
 
-  // Добавим недостающие ноты
-  notes['B4'] = 493.88;
-  notes['D5'] = 587.33;
+const text = [
+  {type: 'verse', lines: [
+    "Ты была моей светлой мечтой,",
+    "Думал, что вместе пройдем сквозь огонь.",
+    "Но в глазах твоих — холод и тень,",
+    "Ты предала, оставив меня в тишине."
+  ]},
+  {type: 'chorus', lines: [
+    "Нож в спину — боль без слов,",
+    "Твоя ложь — как острый снег зимой.",
+    "Я верил, что ты со мной,",
+    "А ты стала холодной тенью судьбы."
+  ]},
+  {type: 'verse', lines: [
+    "Все обещания — пепел и дым,",
+    "Я держал твои слёзы на руках,",
+    "А ты шептала слова, что разбивали меня,",
+    "Вместо любви — я получил лишь вой."
+  ]},
+  {type: 'chorus', lines: [
+    "Нож в спину — боль без слов,",
+    "Твоя ложь — как острый снег зимой.",
+    "Я верил, что ты со мной,",
+    "А ты стала холодной тенью судьбы."
+  ]},
+  {type: 'verse', lines: [
+    "Теперь я один, в этом мире пустом,",
+    "Без тебя — как без воздуха, томно и темно.",
+    "Но время лечит, я это знаю,",
+    "И сердце вновь когда-нибудь оживает."
+  ]},
+  {type: 'chorus', lines: [
+    "Нож в спину — боль без слов,",
+    "Твоя ложь — как острый снег зимой.",
+    "Я верил, что ты со мной,",
+    "Но ты ушла — и я останусь с собой."
+  ]}
+];
 
-  function playNote(freq, duration, time) {
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+const textContainer = document.getElementById('textContainer');
+const playPauseBtn = document.getElementById('playPauseBtn');
 
-    osc.frequency.value = freq;
-    osc.type = 'sine';
+let isPlaying = false;
+let currentPart = 0;
+let currentLine = 0;
+let timerId;
 
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
+function playNote(freq, duration, time) {
+  const osc = ctx.createOscillator();
+  const gainNode = ctx.createGain();
 
-    gainNode.gain.setValueAtTime(0, time);
-    gainNode.gain.linearRampToValueAtTime(0.15, time + 0.01);
-    gainNode.gain.linearRampToValueAtTime(0, time + duration);
+  osc.frequency.value = freq;
+  osc.type = 'sine';
 
-    osc.start(time);
-    osc.stop(time + duration);
-  }
+  osc.connect(gainNode);
+  gainNode.connect(ctx.destination);
 
-  function playChord(chord, startTime) {
-    chord.forEach(note => {
-      playNote(notes[note], 1.8, startTime);
-    });
-  }
+  gainNode.gain.setValueAtTime(0, time);
+  gainNode.gain.linearRampToValueAtTime(0.15, time + 0.01);
+  gainNode.gain.linearRampToValueAtTime(0, time + duration);
 
-  function playProgression() {
-    const now = ctx.currentTime;
-    for(let i = 0; i < chordProgression.length; i++) {
-      playChord(chordProgression[i], now + i * 2);
-    }
-  }
+  osc.start(time);
+  osc.stop(time + duration);
+}
 
-  document.getElementById('playBtn').addEventListener('click', async () => {
-    if(ctx.state === 'suspended') {
-      await ctx.resume();
-    }
-    if(!isPlaying) {
-      playProgression();
-      isPlaying = true;
-      document.getElementById('playBtn').textContent = 'Музыка играет... Обнови страницу, чтобы запустить заново';
-      document.getElementById('playBtn').disabled = true;
-    }
+function playChord(chord, startTime) {
+  chord.forEach(note => {
+    playNote(notes[note], 1.8, startTime);
   });
+}
+
+function playProgressionForPart(type, startTime) {
+  const chords = progressions[type];
+  chords.forEach((chord, i) => {
+    playChord(chord, startTime + i * 2);
+  });
+}
+
+function renderText() {
+  textContainer.innerHTML = '';
+  text.forEach((part, i) => {
+    part.lines.forEach((line, j) => {
+      const div = document.createElement('div');
+      div.textContent = line;
+      div.classList.add('line');
+      div.dataset.part = i;
+      div.dataset.line = j;
+      textContainer.appendChild(div);
+    });
+  });
+}
+
+function highlightCurrentLine() {
+  // Убираем все подсветки
+  document.querySelectorAll('.line').forEach(el => el.classList.remove('active'));
+
+  // Находим текущую строку по currentPart и currentLine
+  const currentDiv = document.querySelector(`.line[data-part="${currentPart}"][data-line="${currentLine}"]`);
+  if(currentDiv) {
+    currentDiv.classList.add('active');
+    currentDiv.scrollIntoView({behavior: "smooth", block: "center"});
+  }
+}
+
+function nextLine() {
+  if(currentPart >= text.length) {
+    isPlaying = false;
+    playPauseBtn.textContent = 'Старт';
+    return;
+  }
+
+  if(currentLine === 0) {
+    // При начале части проигрываем аккорды
+    const startTime = ctx.currentTime + 0.1;
+    playProgressionForPart(text[currentPart].type, startTime);
+  }
+
+  highlightCurrentLine();
+
+  currentLine++;
+  if(currentLine >= text[currentPart].lines.length) {
+    currentPart++;
+    currentLine = 0;
+  }
+
+  if(isPlaying) {
+    timerId = setTimeout(nextLine, 2000);
+  }
+}
+
+playPauseBtn.addEventListener('click', async () => {
+  if(ctx.state === 'suspended') {
+    await ctx.resume();
+  }
+  if(!isPlaying) {
+    isPlaying = true;
+    playPauseBtn.textContent = 'Пауза';
+    nextLine();
+  } else {
+    isPlaying = false;
+    playPauseBtn.textContent = 'Старт';
+    clearTimeout(timerId);
+  }
+});
+
+renderText();
 </script>
 
 </body>
