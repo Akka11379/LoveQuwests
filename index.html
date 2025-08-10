@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>I love you with hearts</title>
+  <title>I love you with waving text</title>
   <style>
     body, html {
       margin: 0; padding: 0; height: 100%;
@@ -26,82 +26,79 @@
     #center-text {
       position: relative;
       z-index: 1;
-      font-size: 5rem;
-      text-shadow: 0 0 15px #ff4d4daa;
+      font-size: 4rem;
+      text-shadow: 0 0 10px #ff4d4daa;
       pointer-events: none;
+      display: flex;
+      gap: 0.1em;
+    }
+    /* Анимация волны */
+    @keyframes wave {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+    #center-text span {
+      display: inline-block;
+      animation-name: wave;
+      animation-duration: 1.5s;
+      animation-iteration-count: infinite;
+      animation-timing-function: ease-in-out;
     }
   </style>
 </head>
 <body>
 
   <div id="tsparticles"></div>
-  <div id="center-text">I love you</div>
+
+  <div id="center-text"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
   <script>
+    // Инициализация частиц (минимальная версия из предыдущего ответа)
     tsParticles.load("tsparticles", {
-      fpsLimit: 60,
+      fpsLimit: 30,
       particles: {
-        number: {
-          value: 70,
-          density: { enable: true, area: 900 }
-        },
+        number: { value: 30, density: { enable: true, area: 600 } },
         color: { value: "#ff4d4d" },
         shape: {
           type: "char",
-          character: {
-            value: "❤",
-            font: "Verdana",
-            style: "",
-            weight: "400"
-          }
+          character: { value: "❤", font: "Verdana", weight: "400" }
         },
-        size: {
-          value: 14,
-          random: { enable: true, minimumValue: 8 }
-        },
-        move: {
-          enable: true,
-          speed: 2,
-          direction: "none",
-          random: false,
-          straight: false,
-          outModes: "out"
-        },
-        opacity: {
-          value: 0.9,
-          random: true
-        }
+        size: { value: 8, random: { enable: true, minimumValue: 5 } },
+        move: { enable: true, speed: 1, outModes: "out" },
+        opacity: { value: 0.8, random: true }
       },
       interactivity: {
         detectsOn: "canvas",
         events: {
-          onHover: {
-            enable: true,
-            mode: "attract"
-          },
-          onClick: {
-            enable: true,
-            mode: "push"  // при клике добавляем частицы
-          },
+          onHover: { enable: true, mode: "attract" },
+          onClick: { enable: true, mode: "push" },
           resize: true
         },
         modes: {
-          attract: {
-            distance: 150,
-            duration: 0.4,
-            speed: 2
-          },
-          push: {
-            quantity: 10  // сколько сердечек добавляем при клике
-          }
+          attract: { distance: 120, duration: 0.4, speed: 1.5 },
+          push: { quantity: 5 }
         }
       },
-      detectRetina: true,
-      background: {
-        color: "#111111"
-      }
+      detectRetina: false,
+      background: { color: "#111111" }
     });
+
+    // Делим текст на буквы и добавляем с задержкой анимацию для волны
+    const textContainer = document.getElementById('center-text');
+    const text = "I love you";
+    for(let i = 0; i < text.length; i++) {
+      const span = document.createElement('span');
+      span.textContent = text[i];
+      // Задаём задержку анимации по индексу буквы, чтобы создать волну
+      span.style.animationDelay = (i * 0.15) + 's';
+      textContainer.appendChild(span);
+    }
   </script>
+
 </body>
 </html>
