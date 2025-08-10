@@ -1,233 +1,107 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Музыка и текст с подсветкой — загадочный грустный текст</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #fff0f6;
-    color: #d6336c;
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 0 20px;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  #textContainer {
-    background: #ffe6f0;
-    border: 2px solid #d6336c;
-    border-radius: 12px;
-    padding: 20px;
-    font-size: 18px;
-    line-height: 1.6;
-    min-height: 200px;
-  }
-  .line {
-    padding: 5px 0;
-    color: #a8325a;
-    transition: color 0.3s, font-weight 0.3s;
-  }
-  .active {
-    color: #d6336c;
-    font-weight: 700;
-  }
-  button {
-    display: block;
-    margin: 30px auto;
-    background-color: #d6336c;
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-size: 20px;
-    padding: 15px 40px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background-color: #a8325a;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>I love you with hearts</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #ff4d4d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+    #tsparticles {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      background: #111;
+    }
+    #center-text {
+      position: relative;
+      z-index: 1;
+      font-size: 5rem;
+      text-shadow: 0 0 15px #ff4d4daa;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Текст песни с подсветкой</h1>
-<div id="textContainer"></div>
-<button id="playPauseBtn">Старт</button>
+  <div id="tsparticles"></div>
+  <div id="center-text">I love you</div>
 
-<script>
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-const ctx = new AudioContext();
-
-const notes = {
-  'A3': 220,
-  'B3': 246.94,
-  'C4': 261.63,
-  'D4': 293.66,
-  'E4': 329.63,
-  'F4': 349.23,
-  'G4': 392.00,
-  'A4': 440,
-  'B4': 493.88,
-  'C5': 523.25,
-  'D5': 587.33,
-  'E5': 659.25
-};
-
-const progressions = {
-  verse: [
-    ['A3', 'C4', 'E4', 'G4'],     // Am7
-    ['F4', 'A3', 'C4', 'E4'],     // Fmaj7
-    ['C4', 'E4', 'G4', 'B4'],     // Cmaj7
-    ['G4', 'B4', 'D5', 'F4']      // G7
-  ],
-  chorus: [
-    ['F4', 'A3', 'C4', 'E4'],     // Fmaj7
-    ['G4', 'B4', 'D5', 'F4'],     // G7
-    ['A3', 'C4', 'E4', 'G4'],     // Am7
-    ['E4', 'G4', 'B4', 'D5']      // Em7
-  ]
-};
-
-const text = [
-  {type: 'verse', lines: [
-    "Ты — как тень в моих снах, тихий шёпот ветра,",
-    "Сквозь пустоту прошла, оставив холод и страх.",
-    "Взгляды — как зеркала, скрывающие тайны,",
-    "Ты исчезла, и я остался в плену мглы."
-  ]},
-  {type: 'chorus', lines: [
-    "Нож в спину — безмолвный холод и шрам,",
-    "Ложь — как лёд, что пронзает до дна.",
-    "Я верил в огонь, но остался в дыму,",
-    "Ты — загадка, закрытая мной в тишине."
-  ]},
-  {type: 'verse', lines: [
-    "Все слова — как песок сквозь пальцы уходит,",
-    "Слёзы — как дождь, что смывает следы.",
-    "Вместо любви — пустота и тени,",
-    "И ночь хранит мой разбитый мир."
-  ]},
-  {type: 'chorus', lines: [
-    "Нож в спину — безмолвный холод и шрам,",
-    "Ложь — как лёд, что пронзает до дна.",
-    "Я верил в огонь, но остался в дыму,",
-    "Ты — загадка, закрытая мной в тишине."
-  ]},
-  {type: 'verse', lines: [
-    "Теперь я один, в бездне ночной,",
-    "Искать твой свет — лишь тень за мечтой.",
-    "Но в тишине я слышу шёпот ветра —",
-    "Возможно, однажды я разгадаю тебя."
-  ]}
-];
-
-const textContainer = document.getElementById('textContainer');
-const playPauseBtn = document.getElementById('playPauseBtn');
-
-let isPlaying = false;
-let currentPart = 0;
-let currentLine = 0;
-let timerId;
-
-function playNote(freq, duration, time) {
-  const osc = ctx.createOscillator();
-  const gainNode = ctx.createGain();
-
-  osc.frequency.value = freq;
-  osc.type = 'sine';
-
-  osc.connect(gainNode);
-  gainNode.connect(ctx.destination);
-
-  gainNode.gain.setValueAtTime(0, time);
-  gainNode.gain.linearRampToValueAtTime(0.15, time + 0.01);
-  gainNode.gain.linearRampToValueAtTime(0, time + duration);
-
-  osc.start(time);
-  osc.stop(time + duration);
-}
-
-function playChord(chord, startTime) {
-  chord.forEach(note => {
-    playNote(notes[note], 0.9, startTime);
-  });
-}
-
-function playProgressionForPart(type, startTime) {
-  const chords = progressions[type];
-  chords.forEach((chord, i) => {
-    playChord(chord, startTime + i * 1);
-  });
-}
-
-function renderText() {
-  textContainer.innerHTML = '';
-  text.forEach((part, i) => {
-    part.lines.forEach((line, j) => {
-      const div = document.createElement('div');
-      div.textContent = line;
-      div.classList.add('line');
-      div.dataset.part = i;
-      div.dataset.line = j;
-      textContainer.appendChild(div);
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+  <script>
+    tsParticles.load("tsparticles", {
+      fpsLimit: 60,
+      particles: {
+        number: {
+          value: 70,
+          density: { enable: true, area: 900 }
+        },
+        color: { value: "#ff4d4d" },
+        shape: {
+          type: "char",
+          character: {
+            value: "❤",
+            font: "Verdana",
+            style: "",
+            weight: "400"
+          }
+        },
+        size: {
+          value: 14,
+          random: { enable: true, minimumValue: 8 }
+        },
+        move: {
+          enable: true,
+          speed: 2,
+          direction: "none",
+          random: false,
+          straight: false,
+          outModes: "out"
+        },
+        opacity: {
+          value: 0.9,
+          random: true
+        }
+      },
+      interactivity: {
+        detectsOn: "canvas",
+        events: {
+          onHover: {
+            enable: true,
+            mode: "attract"
+          },
+          onClick: {
+            enable: true,
+            mode: "push"  // при клике добавляем частицы
+          },
+          resize: true
+        },
+        modes: {
+          attract: {
+            distance: 150,
+            duration: 0.4,
+            speed: 2
+          },
+          push: {
+            quantity: 10  // сколько сердечек добавляем при клике
+          }
+        }
+      },
+      detectRetina: true,
+      background: {
+        color: "#111111"
+      }
     });
-  });
-}
-
-function highlightCurrentLine() {
-  document.querySelectorAll('.line').forEach(el => el.classList.remove('active'));
-  const currentDiv = document.querySelector(`.line[data-part="${currentPart}"][data-line="${currentLine}"]`);
-  if(currentDiv) {
-    currentDiv.classList.add('active');
-    currentDiv.scrollIntoView({behavior: "smooth", block: "center"});
-  }
-}
-
-function nextLine() {
-  if(currentPart >= text.length) {
-    isPlaying = false;
-    playPauseBtn.textContent = 'Старт';
-    return;
-  }
-
-  if(currentLine === 0) {
-    const startTime = ctx.currentTime + 0.1;
-    playProgressionForPart(text[currentPart].type, startTime);
-  }
-
-  highlightCurrentLine();
-
-  currentLine++;
-  if(currentLine >= text[currentPart].lines.length) {
-    currentPart++;
-    currentLine = 0;
-  }
-
-  if(isPlaying) {
-    timerId = setTimeout(nextLine, 2000);
-  }
-}
-
-playPauseBtn.addEventListener('click', async () => {
-  if(ctx.state === 'suspended') {
-    await ctx.resume();
-  }
-  if(!isPlaying) {
-    isPlaying = true;
-    playPauseBtn.textContent = 'Пауза';
-    nextLine();
-  } else {
-    isPlaying = false;
-    playPauseBtn.textContent = 'Старт';
-    clearTimeout(timerId);
-  }
-});
-
-renderText();
-</script>
-
+  </script>
 </body>
 </html>
