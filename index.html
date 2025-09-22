@@ -1,104 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>I love you with waving text</title>
+  <meta charset="UTF-8">
+  <title>Любовь и Диас</title>
   <style>
-    body, html {
-      margin: 0; padding: 0; height: 100%;
-      overflow: hidden;
-      background: #111;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #ff4d4d;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      user-select: none;
-    }
-    #tsparticles {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, pink, lightblue);
       height: 100vh;
-      z-index: 0;
-      background: #111;
-    }
-    #center-text {
-      position: relative;
-      z-index: 1;
-      font-size: 4rem;
-      text-shadow: 0 0 10px #ff4d4daa;
-      pointer-events: none;
       display: flex;
-      gap: 0.1em;
+      flex-direction: column;
+      justify-content: center;
+      margin: 0;
     }
-    /* Анимация волны */
-    @keyframes wave {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
+    h1 {
+      font-size: 3em;
+      color: red;
+      margin: 10px 0;
     }
-    #center-text span {
-      display: inline-block;
-      animation-name: wave;
-      animation-duration: 1.5s;
-      animation-iteration-count: infinite;
-      animation-timing-function: ease-in-out;
+    h2 {
+      font-size: 2em;
+      color: darkblue;
+      margin: 10px 0;
     }
   </style>
 </head>
 <body>
-
-  <div id="tsparticles"></div>
-
-  <div id="center-text"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
-  <script>
-    // Инициализация частиц (минимальная версия из предыдущего ответа)
-    tsParticles.load("tsparticles", {
-      fpsLimit: 30,
-      particles: {
-        number: { value: 30, density: { enable: true, area: 600 } },
-        color: { value: "#ff4d4d" },
-        shape: {
-          type: "char",
-          character: { value: "❤", font: "Verdana", weight: "400" }
-        },
-        size: { value: 8, random: { enable: true, minimumValue: 5 } },
-        move: { enable: true, speed: 1, outModes: "out" },
-        opacity: { value: 0.8, random: true }
-      },
-      interactivity: {
-        detectsOn: "canvas",
-        events: {
-          onHover: { enable: true, mode: "attract" },
-          onClick: { enable: true, mode: "push" },
-          resize: true
-        },
-        modes: {
-          attract: { distance: 120, duration: 0.4, speed: 1.5 },
-          push: { quantity: 5 }
-        }
-      },
-      detectRetina: false,
-      background: { color: "#111111" }
-    });
-
-    // Делим текст на буквы и добавляем с задержкой анимацию для волны
-    const textContainer = document.getElementById('center-text');
-    const text = "I love you";
-    for(let i = 0; i < text.length; i++) {
-      const span = document.createElement('span');
-      span.textContent = text[i];
-      // Задаём задержку анимации по индексу буквы, чтобы создать волну
-      span.style.animationDelay = (i * 0.15) + 's';
-      textContainer.appendChild(span);
-    }
-  </script>
-
+  <h1>❤️ Любовь ❤️</h1>
+  <h2>Диас, ты лох УЧИ РУСКИЙ И АДЕБИЕТ МАЛ СУАЙТ</h2>
 </body>
 </html>
+
