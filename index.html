@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Heart → Letter → Photo</title>
+  <title>Heart → Letter → 2 Photos</title>
   <style>
     :root{
       --bg-white: #ffffff;
@@ -15,11 +15,7 @@
     }
 
     *{box-sizing:border-box}
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: Inter, system-ui, Arial;
-    }
+    html,body{height:100%;margin:0;font-family: Inter, system-ui, Arial;}
 
     .stage{
       height:100vh;
@@ -32,9 +28,7 @@
       position:relative;
     }
 
-    .stage.opened{
-      background: var(--bg-purple);
-    }
+    .stage.opened{background: var(--bg-purple);}
 
     .canvas{
       width:420px;
@@ -78,33 +72,10 @@
       transition: transform var(--transition);
     }
 
-    .heart-shape{
-      fill: #ff2d4a;
-      stroke:#ff2d4a;
-      stroke-width: 4;
-      transition: transform var(--transition);
-      transform-origin:center;
-    }
+    .heart-shape{fill: #ff2d4a; stroke:#ff2d4a; stroke-width: 4; transition: transform var(--transition); transform-origin:center;}
 
-    /* Письмо */
-    .letter, .photo{
-      position:relative;
-      width:320px;
-      max-width:90%;
-      margin-bottom:80px;
-      transform: translateY(40px) scale(.96);
-      opacity:0;
-      pointer-events:none;
-      transition: transform var(--transition), opacity var(--transition);
-      z-index:3;
-    }
-
-    .stage.opened .letter.visible,
-    .stage.opened .photo.visible{
-      transform: translateY(0) scale(1);
-      opacity:1;
-      pointer-events:auto;
-    }
+    .letter, .photo{position:relative;width:320px; max-width:90%; margin-bottom:80px; transform: translateY(40px) scale(.96); opacity:0; pointer-events:none; transition: transform var(--transition), opacity var(--transition); z-index:3;}
+    .letter.visible, .photo.visible{transform: translateY(0) scale(1); opacity:1; pointer-events:auto;}
 
     .sheet{
       background:var(--card-bg);
@@ -119,45 +90,14 @@
     .sheet h3{margin:0 0 8px 0;font-size:18px;}
     .sheet p{margin:0;font-size:14px;line-height:1.45;}
 
-    .stamp{
-      position:absolute;
-      top:-14px;
-      left:18px;
-      background:#ffd995;
-      padding:5px 10px;
-      border-radius:10px;
-      font-size:12px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.08);
-    }
+    .stamp{position:absolute;top:-14px;left:18px;background:#ffd995;padding:5px 10px;border-radius:10px;font-size:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);}
 
-    .close-btn{
-      position:absolute;
-      top:10px;
-      right:10px;
-      border:none;
-      background:transparent;
-      font-size:18px;
-      cursor:pointer;
-      opacity:0.6;
-    }
+    .close-btn{position:absolute;top:10px;right:10px;border:none;background:transparent;font-size:18px;cursor:pointer;opacity:0.6;}
 
-    .hint{
-      position:absolute;
-      bottom:14px;
-      left:50%;
-      transform:translateX(-50%);
-      font-size:13px;
-      color: rgba(0,0,0,0.6);
-    }
-
+    .hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:13px;color: rgba(0,0,0,0.6);}
     .stage.opened .hint{opacity:0;}
 
-    /* Фото */
-    .photo img{
-      width:100%;
-      border-radius:12px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-    }
+    .photo img{width:100%; border-radius:12px; box-shadow: 0 12px 30px rgba(0,0,0,0.2);}
   </style>
 </head>
 <body>
@@ -180,7 +120,6 @@
         </div>
       </div>
 
-      <!-- Фото -->
       <!-- Фото 1 -->
       <div class="photo" id="photo1">
         <img src="photo.jpg" alt="Фото 1">
@@ -191,14 +130,18 @@
         <img src="photo2.jpg" alt="Фото 2">
       </div>
 
-
+      <div class="hint">Нажми на сердечко</div>
+    </div>
+  </div>
 
   <script>
     const stage = document.getElementById('stage');
     const heartBtn = document.getElementById('heartBtn');
     const closeBtn = document.getElementById('closeBtn');
+
     const letter = document.getElementById('letter');
-    const photo = document.getElementById('photo');
+    const photo1 = document.getElementById('photo1');
+    const photo2 = document.getElementById('photo2');
 
     let clickCount = 0;
 
@@ -208,10 +151,16 @@
 
       if(clickCount === 1){
         letter.classList.add('visible');
-        photo.classList.remove('visible');
+        photo1.classList.remove('visible');
+        photo2.classList.remove('visible');
       } else if(clickCount === 2){
         letter.classList.remove('visible');
-        photo.classList.add('visible');
+        photo1.classList.add('visible');
+        photo2.classList.remove('visible');
+      } else if(clickCount === 3){
+        letter.classList.remove('visible');
+        photo1.classList.remove('visible');
+        photo2.classList.add('visible');
       }
     }
 
@@ -219,10 +168,10 @@
       e.stopPropagation();
       stage.classList.remove('opened');
       letter.classList.remove('visible');
-      photo.classList.remove('visible');
-      clickCount = 0; // сбрасываем на первый клик
+      photo1.classList.remove('visible');
+      photo2.classList.remove('visible');
+      clickCount = 0;
     }
   </script>
 </body>
 </html>
-
